@@ -87,6 +87,10 @@ export interface SessionResult extends LiveStats {
   adaptiveTempo: boolean;
   songUrl: string | null;
   songTitle: string | null;
+  /** Total character keystrokes (correct + wrong) — required by the API. */
+  keystrokes: number;
+  /** Lines playback moved past before the player finished them. */
+  linesMissed: number;
 }
 
 /* ------------------------------------------------------------------ */

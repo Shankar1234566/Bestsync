@@ -179,6 +179,24 @@ export const MIGRATIONS: Migration[] = [
       CREATE INDEX idx_battles_opponent ON battles(opponent_id, status);
     `,
   },
+  {
+    id: 2,
+    name: 'discovered-lyrics-cache',
+    sql: `
+      CREATE TABLE discovered_lyrics (
+        song_id           INTEGER PRIMARY KEY REFERENCES songs(id) ON DELETE CASCADE,
+        provider          TEXT NOT NULL,
+        provider_track_id INTEGER,
+        matched_title     TEXT NOT NULL DEFAULT '',
+        matched_artist    TEXT NOT NULL DEFAULT '',
+        match_score       REAL NOT NULL DEFAULT 0,
+        content           TEXT NOT NULL,
+        is_timestamped    INTEGER NOT NULL DEFAULT 0,
+        fetched_at        INTEGER NOT NULL,
+        expires_at        INTEGER NOT NULL
+      );
+    `,
+  },
 ];
 
 export function runMigrations(db: Database): void {

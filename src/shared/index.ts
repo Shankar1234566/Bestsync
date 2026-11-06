@@ -13,3 +13,4 @@ export * from './badges';
 export * from './tempo';
 export * from './challenges';
 export * from './leaderboard';
+export * from './lyricsMatch';

@@ -7,8 +7,27 @@ import { wrap, isRecord, requireString } from '../http/helpers';
 import { authedUserId, requireAuth } from '../middleware/auth';
 import { rateLimit } from '../middleware/rateLimit';
 import { parseLyricsInput, parsePlayerUrl } from '../../shared';
+import { LyricsService } from '../services/lyricsService';
+import type { SongRow } from '../services/songService';
 
 const MAX_LYRICS_CHARS = 20_000;
+
+/** Public song shape returned with lyrics responses. */
+function songDto(song: SongRow): {
+  id: number;
+  provider: string;
+  title: string;
+  artist: string;
+  artworkUrl: string;
+} {
+  return {
+    id: song.id,
+    provider: song.provider,
+    title: song.title,
+    artist: song.artist,
+    artworkUrl: song.artwork_url,
+  };
+}
 
 export function songRoutes(ctx: AppContext): Router {
   const router = Router();
@@ -17,6 +36,14 @@ export function songRoutes(ctx: AppContext): Router {
     bucket: 'metadata',
     windowMs: 60_000,
     max: 30,
+  });
+
+  // Discovery may make outbound provider calls — keep anonymous visitors
+  // from sweeping the bucket (cache hits below this limit are free).
+  const lyricsLimiter = rateLimit({
+    bucket: 'lyrics',
+    windowMs: 60_000,
+    max: 24,
   });
 
   /** Validate a link and return provider, capabilities, limitations, metadata. */
@@ -130,27 +157,98 @@ export function songRoutes(ctx: AppContext): Router {
     }),
   );
 
+  /**
+   * Lyrics for a song: saved (signed-in user) → automatic discovery →
+   * friendly null with a reason + hint. Public so the paste-and-play flow
+   * never requires signing in; `req.userId` is used only when present.
+   */
   router.get(
     '/lyrics',
-    requireAuth,
-    wrap((req, res) => {
-      const userId = authedUserId(req);
+    lyricsLimiter,
+    wrap(async (req, res) => {
+      const userId = req.userId;
       const url = String(req.query.url ?? '');
       const detection = parsePlayerUrl(url);
       if (!detection.valid || !detection.normalizedUrl) {
         res.status(400).json({ error: detection.reason ?? 'Invalid song link.' });
         return;
       }
-      const song = ctx.songs.byUrl(detection.normalizedUrl);
+
+      // Optional duration hint (seconds) from the player — improves provider
+      // matching. Ignored when absent or out of range.
+      const rawDuration = Number(req.query.duration);
+      const durationSec =
+        Number.isFinite(rawDuration) && rawDuration >= 1 && rawDuration <= 3600
+          ? Math.round(rawDuration)
+          : null;
+
+      let song = ctx.songs.byUrl(detection.normalizedUrl);
       if (!song) {
-        res.json({ lyrics: null });
+        // First request for this link — create the row so discovery has a
+        // stable song id to cache against.
+        song = ctx.songs.upsert(detection);
+      }
+
+      // Saved lyrics always win — they are the user's own curated copy.
+      if (userId !== undefined) {
+        const saved = ctx.songs.lyrics(userId, song.id);
+        if (saved) {
+          res.json({
+            lyrics: {
+              content: saved.content,
+              timed: saved.is_timestamped === 1,
+              updatedAt: saved.updated_at,
+            },
+            source: 'saved',
+            provider: null,
+            reason: null,
+            hint: null,
+            song: songDto(song),
+          });
+          return;
+        }
+      }
+
+      // Discovery needs a real title to search with — resolve metadata once
+      // (oEmbed, same official endpoints as /metadata) before searching.
+      if (!song.title.trim() && ctx.lyrics.enabled) {
+        const fetched = await ctx.songs.fetchMetadata(detection);
+        if (fetched.title || fetched.artworkUrl) {
+          song = ctx.songs.upsert(detection, fetched);
+        }
+      }
+
+      const result = await ctx.lyrics.discover(song, durationSec);
+      if (result.lyrics) {
+        res.json({
+          lyrics: {
+            content: result.lyrics.content,
+            timed: result.lyrics.timed,
+            updatedAt: result.lyrics.fetchedAt,
+          },
+          source: 'discovered',
+          provider: result.lyrics.provider,
+          reason: null,
+          hint: null,
+          match: {
+            title: result.lyrics.matchedTitle,
+            artist: result.lyrics.matchedArtist,
+            score: result.lyrics.matchScore,
+          },
+          song: songDto(song),
+        });
         return;
       }
-      const saved = ctx.songs.lyrics(userId, song.id);
+
       res.json({
-        lyrics: saved
-          ? { content: saved.content, timed: saved.is_timestamped === 1, updatedAt: saved.updated_at }
-          : null,
+        lyrics: null,
+        source: null,
+        provider: null,
+        reason: result.reason,
+        hint: ctx.lyrics.enabled
+          ? LyricsService.hintFor(result.reason)
+          : 'Automatic lyrics are disabled on this server — add lyrics manually.',
+        song: songDto(song),
       });
     }),
   );

@@ -1,0 +1,92 @@
+/* ==========================================================================
+   BeatSync design tokens — lavender / purple / pink / electric blue / peach
+   Light music theme by default with an optional dark music mode.
+   ========================================================================== */
+
+:root {
+  /* Brand palette */
+  --lavender: #c4b5fd;
+  --lavender-deep: #a78bfa;
+  --purple: #7c3aed;
+  --purple-soft: #8b5cf6;
+  --pink: #f472b6;
+  --pink-deep: #ec4899;
+  --electric: #38bdf8;
+  --electric-deep: #0ea5e9;
+  --peach: #fdba74;
+  --peach-deep: #fb923c;
+  --mint: #6ee7b7;
+
+  /* Surfaces (light) */
+  --bg: #fbf9ff;
+  --bg-accent: #f3edff;
+  --card: #ffffff;
+  --card-2: #f8f5ff;
+  --ink: #2a1f4d;
+  --ink-soft: #6b6287;
+  --ink-faint: #9d95b5;
+  --line: #ece5ff;
+  --line-strong: #ddd2fb;
+
+  /* Feedback */
+  --ok: #10b981;
+  --warn: #f59e0b;
+  --danger: #ef4444;
+  --ok-soft: #d1fae5;
+  --danger-soft: #fee2e2;
+
+  /* Gradients */
+  --grad-main: linear-gradient(120deg, #a78bfa 0%, #f472b6 52%, #fdba74 100%);
+  --grad-cool: linear-gradient(120deg, #8b5cf6 0%, #38bdf8 100%);
+  --grad-warm: linear-gradient(120deg, #f472b6 0%, #fdba74 100%);
+  --grad-card: linear-gradient(160deg, rgba(167, 139, 250, 0.16), rgba(244, 114, 182, 0.1) 55%, rgba(253, 186, 116, 0.14));
+  --grad-veil: radial-gradient(1200px 600px at 10% -10%, rgba(167, 139, 250, 0.22), transparent 60%),
+    radial-gradient(900px 500px at 110% 10%, rgba(244, 114, 182, 0.18), transparent 55%),
+    radial-gradient(800px 700px at 50% 120%, rgba(56, 189, 248, 0.14), transparent 60%);
+
+  /* Elevation */
+  --shadow-sm: 0 1px 2px rgba(76, 51, 135, 0.06), 0 2px 8px rgba(76, 51, 135, 0.05);
+  --shadow-md: 0 4px 14px rgba(76, 51, 135, 0.1), 0 10px 30px rgba(76, 51, 135, 0.08);
+  --shadow-lg: 0 12px 40px rgba(76, 51, 135, 0.16);
+  --glow: 0 0 0 4px rgba(139, 92, 246, 0.16);
+
+  /* Shape */
+  --radius-sm: 10px;
+  --radius: 16px;
+  --radius-lg: 24px;
+  --radius-pill: 999px;
+
+  /* Type */
+  --font: 'Segoe UI', 'Inter', system-ui, -apple-system, 'Helvetica Neue', sans-serif;
+  --font-display: 'Segoe UI Semibold', 'Inter', system-ui, sans-serif;
+
+  /* Motion */
+  --speed: 180ms;
+  --speed-slow: 320ms;
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+
+  /* Layout */
+  --topbar-h: 64px;
+  --content-max: 1180px;
+}
+
+[data-theme='dark'] {
+  --bg: #140f2b;
+  --bg-accent: #1b1438;
+  --card: #1e1740;
+  --card-2: #241c4b;
+  --ink: #f1ecff;
+  --ink-soft: #b6acd8;
+  --ink-faint: #8b81b3;
+  --line: #2e2554;
+  --line-strong: #3c3169;
+  --grad-card: linear-gradient(160deg, rgba(139, 92, 246, 0.2), rgba(236, 72, 153, 0.12) 55%, rgba(251, 146, 60, 0.12));
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 6px 18px rgba(0, 0, 0, 0.45);
+  --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.55);
+  --ok-soft: rgba(16, 185, 129, 0.18);
+  --danger-soft: rgba(239, 68, 68, 0.18);
+  --grad-veil: radial-gradient(1200px 600px at 10% -10%, rgba(139, 92, 246, 0.25), transparent 60%),
+    radial-gradient(900px 500px at 110% 10%, rgba(236, 72, 153, 0.18), transparent 55%),
+    radial-gradient(800px 700px at 50% 120%, rgba(14, 165, 233, 0.14), transparent 60%);
+}

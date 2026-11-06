@@ -12,6 +12,7 @@ import { ScoreService } from './services/scoreService';
 import { LeaderboardService } from './services/leaderboardService';
 import { SocialService } from './services/socialService';
 import { BattleService } from './services/battleService';
+import { LrclibProvider, LyricsService } from './services/lyricsService';
 
 export interface AppContext {
   config: AppConfig;
@@ -24,6 +25,8 @@ export interface AppContext {
   leaderboard: LeaderboardService;
   social: SocialService;
   battles: BattleService;
+  /** Automatic lyrics discovery — provider list is extensible in one place. */
+  lyrics: LyricsService;
 }
 
 export function createContext(config: AppConfig): AppContext {
@@ -36,6 +39,23 @@ export function createContext(config: AppConfig): AppContext {
   const leaderboard = new LeaderboardService(db);
   const social = new SocialService(db);
   const battles = new BattleService(db, songs, profile);
+  const lyrics = new LyricsService(
+    db,
+    [new LrclibProvider(fetch, config.lyricsClientId)],
+    { enabled: config.lyricsDiscovery },
+  );
 
-  return { config, db, auth, profile, songs, challenges, scores, leaderboard, social, battles };
+  return {
+    config,
+    db,
+    auth,
+    profile,
+    songs,
+    challenges,
+    scores,
+    leaderboard,
+    social,
+    battles,
+    lyrics,
+  };
 }

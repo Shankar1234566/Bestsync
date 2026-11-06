@@ -14,6 +14,10 @@ export interface AppConfig {
   isProduction: boolean;
   /** Directory served as static SPA build in production (may not exist in dev). */
   clientDist: string;
+  /** Automatic lyrics discovery (LRCLIB etc.) — off in tests unless forced. */
+  lyricsDiscovery: boolean;
+  /** Client identity sent to lyrics providers (LRCLIB asks for name+link). */
+  lyricsClientId: string;
 }
 
 const DEV_JWT_SECRET = 'beatsync-dev-only-secret-do-not-use-in-production';
@@ -46,6 +50,14 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
     .map((o) => o.trim())
     .filter(Boolean);
 
+  // Discovery makes outbound calls — disabled by default under test runs so
+  // the suite never depends on a live third-party API. LYRICS_DISCOVERY can
+  // force either way in any environment.
+  const lyricsDiscovery =
+    env.LYRICS_DISCOVERY !== undefined
+      ? env.LYRICS_DISCOVERY !== 'false'
+      : nodeEnv !== 'test';
+
   return {
     port,
     jwtSecret: jwtSecret || DEV_JWT_SECRET,
@@ -55,5 +67,9 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
     nodeEnv,
     isProduction,
     clientDist: env.CLIENT_DIST?.trim() || path.join(process.cwd(), 'dist'),
+    lyricsDiscovery,
+    lyricsClientId:
+      env.LYRICS_CLIENT_ID?.trim() ||
+      'BeatSync v0.1.0 (https://github.com/ElevateIQ/Bestsync)',
   };
 }
